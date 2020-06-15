@@ -11,11 +11,14 @@ import java.util.List;
 public class Story {
 
     private String title;
+
     private String url;
+
     private Integer score;
+
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date timeOfSubmission;
+
     private String user;
-    private List<Comment> comments;
 
 }

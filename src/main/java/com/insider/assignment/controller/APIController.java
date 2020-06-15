@@ -1,7 +1,6 @@
 package com.insider.assignment.controller;
 
-import com.insider.assignment.impl.HackerRankImpl;
-import com.insider.assignment.kafka.InsiderKafkaClient;
+import com.insider.assignment.service.HackerRankService;
 import com.insider.assignment.pojo.response.APIResponse;
 import com.insider.assignment.pojo.response.Comment;
 import com.insider.assignment.pojo.response.Story;
@@ -22,7 +21,7 @@ public class APIController {
 
 
     @Autowired
-    private HackerRankImpl hackerRankAPIs;
+    private HackerRankService hackerRankAPIs;
 
     @GetMapping("/top-stories")
     public ResponseEntity<APIResponse> getTopStories(){

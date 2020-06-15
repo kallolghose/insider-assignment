@@ -1,22 +1,28 @@
-package com.insider.assignment.impl;
+package com.insider.assignment.service;
 
-import com.insider.assignment.dao.HackerRankDAO;
+import com.insider.assignment.entity.Stories;
 import com.insider.assignment.pojo.response.Comment;
 import com.insider.assignment.pojo.response.HackerItem;
 import com.insider.assignment.pojo.response.HackerUser;
 import com.insider.assignment.pojo.response.Story;
+import com.insider.assignment.repository.StoriesRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 
-@Component
-public class HackerRankImpl implements HackerRankDAO {
+@Service
+public class HackerRankServiceImpl implements HackerRankService {
 
     RestTemplate restTemplate = new RestTemplate();
     String URL = "https://hacker-news.firebaseio.com/v0";
+
+    @Autowired
+    private StoriesRepository storiesRepository;
 
     @Cacheable(value = "topStories", key = "topStories")
     @Override
@@ -25,26 +31,37 @@ public class HackerRankImpl implements HackerRankDAO {
         ResponseEntity<Long[]> responseEntity =  restTemplate.getForEntity(topStories, Long[].class);
         if(responseEntity.getStatusCodeValue() == 200){
             Long [] ids = responseEntity.getBody();
-            List<Story> stories = new ArrayList<>();
-            for(int i=0; i< 10; i++){
+            List<Stories> storiesList = new ArrayList<>();
+            for(int i=0; i< ids.length; i++){
                 Long storyId = ids[i];
                 String storyURL = URL + "/item/" + storyId + ".json?print=pretty";
                 ResponseEntity<HackerItem> storyItem = restTemplate.getForEntity(storyURL, HackerItem.class);
                 if(storyItem.getStatusCodeValue() == 200){
                     HackerItem _hackerItem = storyItem.getBody();
-                    Story story = new Story();
-                    story.setTitle(_hackerItem.getTitle());
-                    story.setUrl(_hackerItem.getUrl());
-                    story.setScore(_hackerItem.getScore());
-                    story.setUser(_hackerItem.getBy());
-                    story.setTimeOfSubmission(new Date(_hackerItem.getTime()));
-                    stories.add(story);
+
+                    Stories stories = new Stories();
+                    stories.setStoryId(_hackerItem.getId());
+                    stories.setTitle(_hackerItem.getTitle());
+                    stories.setUrl(_hackerItem.getUrl());
+                    stories.setScore(_hackerItem.getScore());
+                    stories.setUser(_hackerItem.getBy());
+                    stories.setTimeOfSubmission(new Date(_hackerItem.getTime()));
+                    storiesList.add(stories);
                 }
             }
-            stories.sort((s1, s2) -> s2.getScore() - s1.getScore());
+            storiesList.sort((s1, s2) -> s2.getScore() - s1.getScore());
             List<Story> _myStories = new ArrayList<>();
             for(int i=0; i<10; i++){
-                _myStories.add(stories.get(i));
+                Stories stories = storiesList.get(i);
+                if(storiesRepository.findById(stories.getStoryId()) == null)
+                    storiesRepository.save(stories);
+                Story story = new Story();
+                story.setTitle(stories.getTitle());
+                story.setScore(stories.getScore());
+                story.setTimeOfSubmission(stories.getTimeOfSubmission());
+                story.setUser(stories.getUser());
+                story.setUrl(stories.getUrl());
+                _myStories.add(story);
             }
             return _myStories;
         }
@@ -54,7 +71,7 @@ public class HackerRankImpl implements HackerRankDAO {
     @Cacheable(value = "comments", key = "#storyId")
     @Override
     public List<Comment> getCommentsForAStory(Long storyId) {
-        //Check the kafka client
+
         String storyURL = URL + "/item/" + storyId + ".json?print=pretty";
         ResponseEntity<HackerItem> storyItem = restTemplate.getForEntity(storyURL, HackerItem.class);
         HackerItem hackerItem = storyItem.getBody();
@@ -89,7 +106,19 @@ public class HackerRankImpl implements HackerRankDAO {
 
     @Override
     public List<Story> getPastTopStories() {
-        return null;
+        List<Stories> storiesList = storiesRepository.findAll();
+        List<Story> _myStories = new ArrayList<>();
+        for(int i=0; i<storiesList.size(); i++){
+            Stories stories = storiesList.get(i);
+            Story story = new Story();
+            story.setTitle(stories.getTitle());
+            story.setScore(stories.getScore());
+            story.setTimeOfSubmission(stories.getTimeOfSubmission());
+            story.setUser(stories.getUser());
+            story.setUrl(stories.getUrl());
+            _myStories.add(story);
+        }
+        return _myStories;
     }
 
     private int getDiffYears(Date first, Date last) {

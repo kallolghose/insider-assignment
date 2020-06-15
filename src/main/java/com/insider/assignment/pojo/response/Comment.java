@@ -7,7 +7,10 @@ import lombok.Setter;
 public class Comment {
 
     private String text;
+
     private String userHandle;
+
     private Integer age;
+
     private Integer replies;
 }
