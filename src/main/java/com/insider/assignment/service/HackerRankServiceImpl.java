@@ -24,15 +24,18 @@ public class HackerRankServiceImpl implements HackerRankService {
     @Autowired
     private StoriesRepository storiesRepository;
 
-    @Cacheable(value = "topStories", key = "topStories")
+    @Cacheable(value = "topStories")
     @Override
     public List<Story> getTopStories() {
-        String topStories = URL + "/topstories.json?print=pretty";
+        String topStories = URL + "/beststories.json?print=pretty";
         ResponseEntity<Long[]> responseEntity =  restTemplate.getForEntity(topStories, Long[].class);
         if(responseEntity.getStatusCodeValue() == 200){
             Long [] ids = responseEntity.getBody();
             List<Stories> storiesList = new ArrayList<>();
-            for(int i=0; i< ids.length; i++){
+            int _n = 10;
+            if(ids.length < 10)
+                _n = ids.length;
+            for(int i=0; i< _n; i++){
                 Long storyId = ids[i];
                 String storyURL = URL + "/item/" + storyId + ".json?print=pretty";
                 ResponseEntity<HackerItem> storyItem = restTemplate.getForEntity(storyURL, HackerItem.class);
@@ -51,9 +54,9 @@ public class HackerRankServiceImpl implements HackerRankService {
             }
             storiesList.sort((s1, s2) -> s2.getScore() - s1.getScore());
             List<Story> _myStories = new ArrayList<>();
-            for(int i=0; i<10; i++){
+            for(int i=0; i<_n; i++){
                 Stories stories = storiesList.get(i);
-                if(storiesRepository.findById(stories.getStoryId()) == null)
+                if(storiesRepository.findByStoryId(stories.getStoryId()) == null)
                     storiesRepository.save(stories);
                 Story story = new Story();
                 story.setTitle(stories.getTitle());

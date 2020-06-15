@@ -27,10 +27,10 @@ public class Stories {
     @Column(name = "score")
     private Integer score;
 
-    @Column(name = "timeOfSubmission")
+    @Column(name = "timeofsubmission")
     private Date timeOfSubmission;
 
-    @Column(name = "storyUser")
+    @Column(name = "storyuser")
     private String user;
 
 }

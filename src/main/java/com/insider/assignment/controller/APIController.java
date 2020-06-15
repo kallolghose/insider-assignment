@@ -65,10 +65,22 @@ public class APIController {
 
     @GetMapping("/past-stories")
     public ResponseEntity<APIResponse> getPastStories(){
-        APIResponse apiResponse = new APIResponse();
-        apiResponse.setStatus(true);
-        apiResponse.setMessage("Get Past Stories");
-        return new ResponseEntity<APIResponse>(apiResponse, HttpStatus.OK);
+        try {
+            List<Story> stories = hackerRankAPIs.getPastTopStories();
+            APIResponse apiResponse = new APIResponse();
+            apiResponse.setStatus(true);
+            apiResponse.setMessage("Past Stories");
+            apiResponse.setData(stories);
+            return new ResponseEntity<APIResponse>(apiResponse, HttpStatus.OK);
+        }
+        catch (Exception e){
+            e.printStackTrace();
+            APIResponse apiResponse = new APIResponse();
+            apiResponse.setStatus(false);
+            apiResponse.setMessage("Error on Past Stories");
+            apiResponse.setErrors(new ArrayList<String>(){{add(e.getMessage());}});
+            return new ResponseEntity<APIResponse>(apiResponse, HttpStatus.BAD_REQUEST);
+        }
     }
 
 }
